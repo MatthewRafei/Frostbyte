@@ -21,11 +21,21 @@ class Map {
             [1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1, 1]
         ];
     }
+
+    hasWallAt(x, y) {
+	if (x < 0 || x > WINDOW_WIDTH || y < 0 || y > WINDOW_WIDTH) {
+	    return true;
+	}
+	var mapGridIndexX = Math.floor(x / TILE_SIZE);
+	var mapGridIndexY = Math.floor(y / TILE_SIZE);
+	return this.grid[mapGridIndexY][mapGridIndexX] != 0;
+	
+    }
+    
     render() {
         for (var i = 0; i < MAP_NUM_ROWS; i++) {
-            for (var j =0; j < MAP_NUM_COLS; j++) {
-                // We aren't using [X,Y] we are using [Y,X]
-                var tileX = j * TILE_SIZE;
+            for (var j = 0; j < MAP_NUM_COLS; j++) {
+                var tileX = j * TILE_SIZE; 
                 var tileY = i * TILE_SIZE;
                 var tileColor = this.grid[i][j] == 1 ? "#222" : "#fff";
                 stroke("#222");
@@ -41,44 +51,43 @@ class Player {
         this.x = WINDOW_WIDTH / 2;
         this.y = WINDOW_HEIGHT / 2;
         this.radius = 3;
-        this.turnDirection = 0;
-        this.walkDirection = 0;
+        this.turnDirection = 0; // -1 if left, +1 if right
+        this.walkDirection = 0; // -1 if back, +1 if front
         this.rotationAngle = Math.PI / 2;
         this.moveSpeed = 2.0;
         this.rotationSpeed = 2 * (Math.PI / 180);
     }
-
-    // Update player position based on turnDir and walkDir
     update() {
         this.rotationAngle += this.turnDirection * this.rotationSpeed;
-        var moveStep = this.walkDirection * this.rotationSpeed;
-        this.x += (walkDirection * moveSpeed);
-        //this.y += this.walkDirection;
-    }
 
+        var moveStep = this.walkDirection * this.moveSpeed;
+	
+	
+        var newPlayerX = this.x + Math.cos(this.rotationAngle) * moveStep;
+        var newPlayerY = this.y + Math.sin(this.rotationAngle) * moveStep;
+
+	// Only set new player position if not collision with wall
+	if (!grid.hasWallAt(newPlayerX, newPlayerY)) {
+	    this.x = newPlayerX;
+	    this.y = newPlayerY;
+	}
+    }
     render() {
         noStroke();
         fill("red");
         circle(this.x, this.y, this.radius);
         stroke("red");
-        line(this.x,
-             this.y,
-             this.x + Math.cos(this.rotationAngle) * 30,
-             this.y + Math.sin(this.rotationAngle) * 30
-            );
+        line(
+            this.x,
+            this.y,
+            this.x + Math.cos(this.rotationAngle) * 30,
+            this.y + Math.sin(this.rotationAngle) * 30
+        );
     }
 }
 
-
-
 var grid = new Map();
 var player = new Player();
-
-// Initalize once
-function setup() {
-    createCanvas(WINDOW_WIDTH, WINDOW_HEIGHT);
-}
-
 
 function keyPressed() {
     if (keyCode == UP_ARROW) {
@@ -104,16 +113,17 @@ function keyReleased() {
     }
 }
 
+function setup() {
+    createCanvas(WINDOW_WIDTH, WINDOW_HEIGHT);
+}
 
-// Draw objects to screen
-function draw() {
+function update() {
     player.update();
+}
+
+function draw() {
+    update();
 
     grid.render();
     player.render();
-}
-
-// Update objects properties
-function update() {
-    // Update all game objects before we render next frame
 }
